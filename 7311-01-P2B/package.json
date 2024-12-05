@@ -1,0 +1,17 @@
+{
+  "name": "7311-02",
+  "version": "0.0.1",
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^5.4.11"
+  },
+  "dependencies": {
+    "vue": "^3.5.13"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  }
+}
+
