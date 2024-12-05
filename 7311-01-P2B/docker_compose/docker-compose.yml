@@ -1,0 +1,29 @@
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    networks:
+      - app-network
+    volumes:
+      - backend_data:/app/data  # Crea un volumen para almacenar datos persistentes
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  backend_data:  # Define el volumen para persistencia
