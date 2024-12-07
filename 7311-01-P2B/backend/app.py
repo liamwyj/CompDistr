@@ -62,8 +62,6 @@ def logout():
 # Agregar una nueva práctica
 @app.route('/practicas', methods=['POST'])
 def agregar_practica():
-    if not session.get('logged_in'):
-        return jsonify({"error": "No autorizado"}), 403
     try:
         data = request.json
         links = json.dumps(data.get('links', []))
@@ -139,3 +137,4 @@ def buscar_practicas():
 if __name__ == "__main__":
     app.debug = True
     app.run(host="0.0.0.0", port=9000)
+
