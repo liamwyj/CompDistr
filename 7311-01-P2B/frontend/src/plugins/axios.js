@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:9000', // URL servidor Flask
+  baseURL: 'https://compdistr.onrender.com', // URL servidor Flask
 });
 
 export default axiosInstance;
