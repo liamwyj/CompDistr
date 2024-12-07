@@ -1,16 +1,28 @@
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from werkzeug.security import check_password_hash, generate_password_hash
+from flask_session import Session
 import sqlite3
 import json
 import os
 
+# Configuración de la aplicación Flask
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
-CORS(app, supports_credentials=True)
+app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")  # Clave secreta desde variables de entorno
 
+# Configuración para sesiones persistentes
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = False
+Session(app)
+
+# Configurar CORS para permitir solicitudes desde el frontend desplegado
+CORS(app, resources={r"/*": {"origins": "https://portfolio-02-ft7r.onrender.com"}}, supports_credentials=True)
+
+# Ruta de la base de datos
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "database", "practicas.db")
+DB_PATH = os.path.join(BASE_DIR, 'practicas.db')
+
+# Datos del usuario administrador
 USER_DATA = {
     "username": "admin",
     "password": generate_password_hash("contraseña1234")  # Contraseña cifrada
@@ -24,7 +36,6 @@ def home():
 def favicon():
     return '', 204
 
-# Obtener todas las prácticas
 @app.route('/practicas', methods=['GET'])
 def obtener_practicas():
     try:
@@ -39,8 +50,6 @@ def obtener_practicas():
     except sqlite3.Error as e:
         return jsonify({"error": "Error de base de datos: " + str(e)}), 500
 
-#iniciar sesión
-    
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
@@ -54,12 +63,10 @@ def login():
         return jsonify({"error": "Credenciales incorrectas"}), 401
 
 @app.route('/logout', methods=['POST'])
-#Cerrar sesión
 def logout():
     session.pop('logged_in', None)
-    return jsonify({"message": "Cierre de sesión exitoso"}), 20
+    return jsonify({"message": "Cierre de sesión exitoso"}), 200
 
-# Agregar una nueva práctica
 @app.route('/practicas', methods=['POST'])
 def agregar_practica():
     if not session.get('logged_in'):
@@ -77,7 +84,6 @@ def agregar_practica():
     except sqlite3.Error as e:
         return jsonify({"error": "Error de base de datos: " + str(e)}), 500
 
-# Eliminar una práctica
 @app.route('/practicas/<int:id>', methods=['DELETE'])
 def eliminar_practica(id):
     try:
@@ -90,7 +96,6 @@ def eliminar_practica(id):
     except sqlite3.Error as e:
         return jsonify({"error": "Error de base de datos: " + str(e)}), 500
 
-# Actualizar una práctica
 @app.route('/practicas/<int:id>', methods=['PUT'])
 def actualizar_practica(id):
     try:
@@ -102,16 +107,13 @@ def actualizar_practica(id):
                 (data['image'], data['title'], data['description'], json.dumps(data['links']), id)
             )
             conn.commit()
-        
         return jsonify({"message": "Práctica actualizada correctamente"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Nueva ruta para buscar prácticas por título
 @app.route('/practicas/buscar', methods=['GET'])
 def buscar_practicas():
     search_term = request.args.get('searchTerm', '').strip().lower()
-    print(f"Término de búsqueda recibido: {search_term}")  # Log para depuración
     try:
         with sqlite3.connect(DB_PATH) as conn:
             conn.row_factory = sqlite3.Row
@@ -120,23 +122,15 @@ def buscar_practicas():
                 c.execute("SELECT * FROM practicas WHERE LOWER(title) LIKE ?", ('%' + search_term + '%',))
             else:
                 c.execute("SELECT * FROM practicas")
-            
             practicas = [dict(row) for row in c.fetchall()]
-            
-            if not practicas:  # Si no se encontraron resultados
+            if not practicas:
                 return jsonify({"error": "No se encontraron prácticas que coincidan con la búsqueda."}), 404
-
-            # Convertir enlaces de JSON a diccionario
             for practica in practicas:
                 practica['links'] = json.loads(practica['links'])
-                
         return jsonify(practicas), 200
     except sqlite3.Error as e:
-        print("Error de base de datos:", e)  # Log para errores de base de datos
         return jsonify({"error": "Error de base de datos: " + str(e)}), 500
-
 
 if __name__ == "__main__":
     app.debug = True
     app.run(host="0.0.0.0", port=9000)
-
