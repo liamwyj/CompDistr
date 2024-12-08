@@ -22,8 +22,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Ejecuta el script de configuración de la base de datos
 RUN python /app/database/setup_db.py  # Configura la base de datos
 
-# Expon el puerto en el que la aplicación Flask escuchará
+# Expone el puerto en el que el servidor WSGI (Gunicorn) escuchará
 EXPOSE 9000
 
-# Comando para ejecutar la aplicación Flask
-CMD ["python", "app.py"]
+# Gunicorn para ejecutar la aplicación Flask
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:9000", "app:app"]
